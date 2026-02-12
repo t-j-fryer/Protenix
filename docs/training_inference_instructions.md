@@ -25,6 +25,37 @@ pip3 install -e .
 ### Docker (Recommended for Training)
 Check the detailed guide: [<u> Docker Installation</u>](./docker_installation.md).
 
+
+### TLJH + RTX 5090 (Blackwell) Notes
+For TLJH multi-user deployments, install from source in a dedicated environment and set CUDA arch before running Protenix.
+
+If you are validating changes from your own fork, clone your fork URL (not the upstream repository URL) and install from that checkout:
+
+```bash
+# Example TLJH env
+sudo -E /opt/tljh/user/bin/conda create -n protenix python=3.11 -y
+
+# Clone from your fork into /srv (replace <your-org-or-user>)
+cd /srv
+sudo git clone https://github.com/<your-org-or-user>/Protenix.git
+sudo chown -R <admin-user>:jupyterhub-users /srv/Protenix
+
+# Optional: keep your fork in sync with upstream
+cd /srv/Protenix
+git remote add upstream https://github.com/bytedance/Protenix.git
+git fetch upstream
+
+# Install from your forked checkout
+sudo -E /opt/tljh/user/bin/conda run -n protenix pip install -e /srv/Protenix
+
+# Important for RTX 5090 / Blackwell
+sudo tee /etc/profile.d/protenix-cuda-arch.sh >/dev/null <<'EOF'
+export TORCH_CUDA_ARCH_LIST="12.0"
+EOF
+```
+
+After setting `TORCH_CUDA_ARCH_LIST`, start a fresh shell (or restart user servers) before first inference so LayerNorm CUDA extensions compile with `sm_120`.
+
 ### External Dependencies
 For features such as **Template search** and **RNA MSA search**, additional system tools are required:
 - **kalign**: Used for sequence alignment.
